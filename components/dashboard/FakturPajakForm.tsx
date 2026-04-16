@@ -1,7 +1,7 @@
 // components/dashboard/FakturPajakForm.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type {
   FakturPajakFormData,
   FakturPajakBuyer,
@@ -190,7 +190,7 @@ function FormStep({ onPreview }: { onPreview: (data: FakturPajakFormData) => voi
   }
 
   // Init buyer on component mount
-  useState(() => {
+  useEffect(() => {
     if (cust) {
       setBuyerType(cust.is_pkp ? 'pkp' : 'nonpkp')
       setBNPWP(cust.npwp || '')
@@ -198,7 +198,7 @@ function FormStep({ onPreview }: { onPreview: (data: FakturPajakFormData) => voi
       setBName(cust.name)
       setBAdr(cust.address)
     }
-  })
+  }, [cust])
 
   const items = (fakturPajakItems[invId] || []) as FakturPajakItem[]
   const ppnItems = items.filter((i) => i.ppn_pct > 0)
