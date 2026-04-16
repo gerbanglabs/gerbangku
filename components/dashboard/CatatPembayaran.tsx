@@ -230,7 +230,7 @@ function FormStep({ onNext }: { onNext: (data: PaymentFormData) => void }) {
   const [fullPay, setFullPay] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const inv = paymentInvoices.find((i) => i.id === invId)
+  const inv = paymentInvoices.find((i) => i.id === invId) || null
   const sisa = inv ? inv.total - inv.paid : 0
   const amtNum = parseFloat(amount.replace(/\./g, '')) || 0
 
@@ -265,12 +265,29 @@ function FormStep({ onNext }: { onNext: (data: PaymentFormData) => void }) {
   }
 
   const submit = () => {
+    if (!inv) {
+      setErrors({ inv: 'Pilih invoice' })
+      return
+    }
+
     const e = validate()
     if (Object.keys(e).length) {
       setErrors(e)
       return
     }
-    onNext({ inv, method, bank, ref, date, amtNum, notes, newPaid, newSisa, newStatus })
+
+    onNext({
+      inv,
+      method,
+      bank,
+      ref,
+      date,
+      amtNum,
+      notes,
+      newPaid,
+      newSisa,
+      newStatus,
+    })
   }
 
   return (
