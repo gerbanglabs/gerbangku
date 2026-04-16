@@ -156,6 +156,8 @@ function CHead({
   )
 }
 
+// ============ FormStep ============
+
 function FormStep({ onPreview }: { onPreview: (data: FakturPajakFormData) => void }) {
   const [invId, setInvId] = useState('inv1')
   const [fpDate, setFpDate] = useState(todayISO)
@@ -174,19 +176,20 @@ function FormStep({ onPreview }: { onPreview: (data: FakturPajakFormData) => voi
   const changeInv = (id: string) => {
     setInvId(id)
     setOvB(false)
-    const c = customers[
-      fakturPajakInvoices.find((i) => i.id === id)?.customer_id as keyof typeof customers
-    ]
-    if (c) {
-      setBuyerType(c.is_pkp ? 'pkp' : 'nonpkp')
-      setBNPWP(c.npwp || '')
-      setBNIK(c.nik || '')
-      setBName(c.name)
-      setBAdr(c.address)
+    const invoice = fakturPajakInvoices.find((i) => i.id === id)
+    if (invoice && invoice.customer_id in customers) {
+      const customer = customers[invoice.customer_id as keyof typeof customers]
+      if (customer) {
+        setBuyerType(customer.is_pkp ? 'pkp' : 'nonpkp')
+        setBNPWP(customer.npwp || '')
+        setBNIK('')
+        setBName(customer.name)
+        setBAdr(customer.address)
+      }
     }
   }
 
-  // init buyer saat mount
+  // Init buyer on component mount
   useState(() => {
     if (cust) {
       setBuyerType(cust.is_pkp ? 'pkp' : 'nonpkp')
@@ -650,7 +653,7 @@ function FormStep({ onPreview }: { onPreview: (data: FakturPajakFormData) => voi
             title="Detail Barang / Jasa Kena Pajak"
             sub="Hanya item dengan PPN yang masuk ke faktur pajak"
           />
-          <div style={{ padding: '0 0 0' }}>
+          <div style={{ padding: 0 }}>
             <div
               style={{
                 display: 'grid',
@@ -717,9 +720,11 @@ function FormStep({ onPreview }: { onPreview: (data: FakturPajakFormData) => voi
                       {item.name}
                     </div>
                     {!isBKP && <div style={{ fontSize: 10, color: COLOR.grayL }}>Tidak kena PPN</div>}
-                    {isBKP && <Tag bg={COLOR.blueXL} color={COLOR.blue}>
-                      BKP
-                    </Tag>}
+                    {isBKP && (
+                      <Tag bg={COLOR.blueXL} color={COLOR.blue}>
+                        BKP
+                      </Tag>
+                    )}
                   </div>
                   <div style={{ fontSize: 13, color: COLOR.gray }}>{item.qty}</div>
                   <div style={{ fontSize: 13, color: COLOR.gray }}>{item.uom}</div>
@@ -932,6 +937,8 @@ function FormStep({ onPreview }: { onPreview: (data: FakturPajakFormData) => voi
     </div>
   )
 }
+
+// ============ PreviewStep ============
 
 function PreviewStep({
   data,
@@ -1371,6 +1378,8 @@ function PreviewStep({
   )
 }
 
+// ============ DoneStep ============
+
 function DoneStep({
   data,
   mode,
@@ -1553,6 +1562,8 @@ function DoneStep({
     </div>
   )
 }
+
+// ============ Main Component ============
 
 export default function FakturPajakFormComponent() {
   const [step, setStep] = useState<'form' | 'preview' | 'done'>('form')
