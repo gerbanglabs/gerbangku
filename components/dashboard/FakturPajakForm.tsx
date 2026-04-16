@@ -171,14 +171,14 @@ function FormStep({ onPreview }: { onPreview: (data: FakturPajakFormData) => voi
   const [notes, setNotes] = useState('')
 
   const inv = fakturPajakInvoices.find((i) => i.id === invId)
-  const cust = inv ? customers[inv.customer_id as keyof typeof customers] : null
+  const cust = inv ? customers.find((c) => c.id === inv.customer_id) : null
 
   const changeInv = (id: string) => {
     setInvId(id)
     setOvB(false)
     const invoice = fakturPajakInvoices.find((i) => i.id === id)
-    if (invoice && invoice.customer_id in customers) {
-      const customer = customers[invoice.customer_id as keyof typeof customers]
+    if (invoice) {
+      const customer = customers.find((c) => c.id === invoice.customer_id)
       if (customer) {
         setBuyerType(customer.is_pkp ? 'pkp' : 'nonpkp')
         setBNPWP(customer.npwp || '')
