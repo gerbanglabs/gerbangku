@@ -16,6 +16,7 @@ const COLOR = {
   greenXL: '#f0fff4',
   blue: '#2b6cb0',
   blueL: '#3182ce',
+  blueXL: '#ebf8ff',
 }
 
 const rp = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID')
