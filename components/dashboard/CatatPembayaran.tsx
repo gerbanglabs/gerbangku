@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { PaymentFormData, PaymentInvoice } from '@/types'
+import type { PaymentInvoice } from '@/types'
 import { paymentInvoices, paymentMethods, banks } from '@/lib/mockData'
 
 const rp = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID')
@@ -16,7 +16,6 @@ const fmtD = (iso: string) =>
       })
     : '-'
 const todayISO = new Date().toISOString().split('T')[0]
-const today = fmtD(todayISO)
 
 const COLOR = {
   dark: '#1a202c',
@@ -35,9 +34,24 @@ const COLOR = {
   redXL: '#fff5f5',
   yellow: '#d69e2e',
   yellowL: '#fffbeb',
-  orange: '#c05621',
-  orangeL: '#fffaf0',
 }
+
+type PaymentMethod = 'transfer' | 'cash' | 'qris' | 'giro'
+
+interface PaymentFormData {
+  inv: PaymentInvoice
+  method: PaymentMethod
+  bank: string
+  ref: string
+  date: string
+  amtNum: number
+  notes: string
+  newPaid: number
+  newSisa: number
+  newStatus: 'unpaid' | 'partial' | 'paid'
+}
+
+// ============ Components ============
 
 function Tag({ bg, color, children }: { bg: string; color: string; children: React.ReactNode }) {
   return (
@@ -64,15 +78,7 @@ function StatusBadge({ inv }: { inv: PaymentInvoice }) {
   return <Tag bg={COLOR.blueXL} color={COLOR.blueL}>Belum Bayar</Tag>
 }
 
-function ProgressBar({
-  paid,
-  total,
-  color,
-}: {
-  paid: number
-  total: number
-  color?: string
-}) {
+function ProgressBar({ paid, total, color }: { paid: number; total: number; color?: string }) {
   const p = pct(paid, total)
   return (
     <div style={{ height: 6, background: COLOR.border, borderRadius: 99, overflow: 'hidden' }}>
@@ -211,17 +217,17 @@ function Inp({
           }}
         />
       )}
-      {error && (
-        <div style={{ fontSize: 11, color: COLOR.red }}>{error}</div>
-      )}
+      {error && <div style={{ fontSize: 11, color: COLOR.red }}>{error}</div>}
       {hint && !error && <div style={{ fontSize: 11, color: COLOR.grayL }}>{hint}</div>}
     </div>
   )
 }
 
+// ============ FormStep ============
+
 function FormStep({ onNext }: { onNext: (data: PaymentFormData) => void }) {
   const [invId, setInvId] = useState('i1')
-  const [method, setMethod] = useState<'transfer' | 'cash' | 'qris' | 'giro'>('transfer')
+  const [method, setMethod] = useState<PaymentMethod>('transfer')
   const [bank, setBank] = useState('BCA')
   const [ref, setRef] = useState('')
   const [date, setDate] = useState(todayISO)
@@ -304,7 +310,9 @@ function FormStep({ onNext }: { onNext: (data: PaymentFormData) => void }) {
         }}
       >
         <div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: COLOR.dark }}>Catat Pembayaran</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: COLOR.dark }}>
+            Catat Pembayaran
+          </div>
           <div style={{ fontSize: 12, color: COLOR.grayL, marginTop: 2 }}>
             Rekam penerimaan pembayaran dari customer
           </div>
@@ -548,7 +556,15 @@ function FormStep({ onNext }: { onNext: (data: PaymentFormData) => void }) {
 
               {/* Jumlah */}
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: COLOR.gray, display: 'block', marginBottom: 5 }}>
+                <label
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: COLOR.gray,
+                    display: 'block',
+                    marginBottom: 5,
+                  }}
+                >
                   Jumlah Pembayaran <span style={{ color: COLOR.red }}>*</span>
                 </label>
                 <div
@@ -672,7 +688,7 @@ function FormStep({ onNext }: { onNext: (data: PaymentFormData) => void }) {
                       <span
                         style={{
                           fontWeight: 700,
-                          color: newSisa <= 0 ? COLOR.green : COLOR.yellow,
+                          color: newSisa <= 0 ? COLOR.greenL : COLOR.yellow,
                         }}
                       >
                         {newSisa <= 0 ? 'Lunas ✓' : rp(newSisa)}
@@ -715,7 +731,7 @@ function FormStep({ onNext }: { onNext: (data: PaymentFormData) => void }) {
                   {paymentMethods.map((m) => (
                     <div
                       key={m.id}
-                      onClick={() => setMethod(m.id as any)}
+                      onClick={() => setMethod(m.id as PaymentMethod)}
                       style={{
                         padding: '10px 12px',
                         border: `1.5px solid ${method === m.id ? COLOR.blueL : COLOR.border}`,
@@ -834,15 +850,17 @@ function FormStep({ onNext }: { onNext: (data: PaymentFormData) => void }) {
                   Ringkasan Invoice
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {[
-                    ['No. Invoice', inv.number, 'mono'],
-                    ['Customer', inv.customer, ''],
-                    ['Tgl Invoice', fmtD(inv.date), ''],
-                    ['Jatuh Tempo', fmtD(inv.due), inv.overdue ? 'red' : ''],
-                    ['Total Tagihan', rp(inv.total), 'bold'],
-                    ['Sudah Dibayar', rp(inv.paid), 'green'],
-                    ['Sisa Tagihan', rp(sisa), 'bold-red'],
-                  ].map(([l, v, style]) => (
+                  {(
+                    [
+                      ['No. Invoice', inv.number, 'mono'] as const,
+                      ['Customer', inv.customer, ''] as const,
+                      ['Tgl Invoice', fmtD(inv.date), ''] as const,
+                      ['Jatuh Tempo', fmtD(inv.due), inv.overdue ? 'red' : ''] as const,
+                      ['Total Tagihan', rp(inv.total), 'bold'] as const,
+                      ['Sudah Dibayar', rp(inv.paid), 'green'] as const,
+                      ['Sisa Tagihan', rp(sisa), 'bold-red'] as const,
+                    ] as const
+                  ).map(([l, v, st]) => (
                     <div
                       key={l}
                       style={{
@@ -855,25 +873,24 @@ function FormStep({ onNext }: { onNext: (data: PaymentFormData) => void }) {
                       <span style={{ color: COLOR.grayL }}>{l}</span>
                       <span
                         style={{
-                          fontFamily:
-                            style === 'mono' ? 'monospace' : 'inherit',
+                          fontFamily: st === 'mono' ? 'monospace' : 'inherit',
                           fontWeight:
-                            style === 'bold' ||
-                            style === 'bold-red' ||
-                            style === 'green'
+                            st === 'bold' ||
+                            st === 'bold-red' ||
+                            st === 'green'
                               ? 700
-                              : style === 'mono'
+                              : st === 'mono'
                                 ? 600
                                 : 400,
                           color:
-                            style === 'red'
+                            st === 'red'
                               ? COLOR.red
-                              : style === 'green'
-                                ? COLOR.green
-                                : style === 'bold-red'
+                              : st === 'green'
+                                ? COLOR.greenL
+                                : st === 'bold-red'
                                   ? COLOR.red
                                   : COLOR.dark,
-                          fontSize: style === 'mono' ? 12 : 13,
+                          fontSize: st === 'mono' ? 12 : 13,
                         }}
                       >
                         {v}
@@ -958,7 +975,7 @@ function FormStep({ onNext }: { onNext: (data: PaymentFormData) => void }) {
                       style={{
                         fontSize: 13,
                         fontWeight: 700,
-                        color: COLOR.green,
+                        color: COLOR.greenL,
                       }}
                     >
                       {rp(inv.paid)}
@@ -1043,6 +1060,8 @@ function FormStep({ onNext }: { onNext: (data: PaymentFormData) => void }) {
   )
 }
 
+// ============ PreviewStep ============
+
 function PreviewStep({
   data,
   onBack,
@@ -1052,7 +1071,7 @@ function PreviewStep({
   onBack: () => void
   onConfirm: () => void
 }) {
-  const { inv, method, bank, ref, date, amtNum, notes, newPaid, newSisa, newStatus } = data
+  const { inv, method, bank, ref, date, amtNum, notes, newPaid, newSisa } = data
   const methodObj = paymentMethods.find((m) => m.id === method)
 
   return (
@@ -1155,48 +1174,42 @@ function PreviewStep({
             }}
           >
             {[
-              ['Invoice', inv?.number, 'mono'],
-              ['Customer', inv?.customer, ''],
-              ['Tanggal Bayar', fmtD(date), ''],
-              method === 'transfer' ? ['No. Referensi', ref, 'mono'] : null,
-              ['Total Invoice', inv ? rp(inv.total) : '-', ''],
-              ['Sudah Dibayar', inv ? rp(inv.paid) : '-', ''],
-              ['Pembayaran Ini', rp(amtNum), 'green-bold'],
-              [
-                'Sisa Tagihan',
-                newSisa <= 0 ? 'Lunas ✓' : rp(newSisa),
-                newSisa <= 0 ? 'green-bold' : 'red-bold',
-              ],
-            ]
-              .filter(Boolean)
-              .map(([l, v, st]) => (
-                <div
-                  key={l}
+              { l: 'Invoice', v: inv.number, st: 'mono' },
+              { l: 'Customer', v: inv.customer, st: '' },
+              { l: 'Tanggal Bayar', v: fmtD(date), st: '' },
+              ...(method === 'transfer' ? [{ l: 'No. Referensi', v: ref, st: 'mono' }] : []),
+              { l: 'Total Invoice', v: rp(inv.total), st: '' },
+              { l: 'Sudah Dibayar', v: rp(inv.paid), st: '' },
+              { l: 'Pembayaran Ini', v: rp(amtNum), st: 'green-bold' },
+              { l: 'Sisa Tagihan', v: newSisa <= 0 ? 'Lunas ✓' : rp(newSisa), st: newSisa <= 0 ? 'green-bold' : 'red-bold' },
+            ].map((item) => (
+              <div
+                key={item.l}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '9px 0',
+                  borderBottom: `1px solid ${COLOR.border}`,
+                  fontSize: 13,
+                }}
+              >
+                <span style={{ color: COLOR.grayL }}>{item.l}</span>
+                <span
                   style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '9px 0',
-                    borderBottom: `1px solid ${COLOR.border}`,
-                    fontSize: 13,
+                    fontFamily: item.st === 'mono' ? 'monospace' : 'inherit',
+                    fontWeight: item.st.includes('bold') ? 700 : item.st === 'mono' ? 600 : 400,
+                    color: item.st.includes('green')
+                      ? COLOR.greenL
+                      : item.st.includes('red')
+                        ? COLOR.red
+                        : COLOR.dark,
+                    fontSize: item.st === 'mono' ? 12 : 13,
                   }}
                 >
-                  <span style={{ color: COLOR.grayL }}>{l}</span>
-                  <span
-                    style={{
-                      fontFamily: st === 'mono' ? 'monospace' : 'inherit',
-                      fontWeight: (st as string)?.includes('bold') ? 700 : 400,
-                      color: (st as string)?.includes('green')
-                        ? COLOR.green
-                        : (st as string)?.includes('red')
-                          ? COLOR.red
-                          : COLOR.dark,
-                      fontSize: st === 'mono' ? 12 : 13,
-                    }}
-                  >
-                    {v}
-                  </span>
-                </div>
-              ))}
+                  {item.v}
+                </span>
+              </div>
+            ))}
           </div>
 
           {notes && (
@@ -1227,12 +1240,12 @@ function PreviewStep({
                 border: `1px solid #9ae6b4`,
                 borderRadius: 8,
                 fontSize: 12,
-                color: COLOR.green,
+                color: COLOR.greenL,
                 fontWeight: 600,
                 textAlign: 'center',
               }}
             >
-              🎉 Invoice {inv?.number} akan berstatus LUNAS setelah pembayaran ini
+              🎉 Invoice {inv.number} akan berstatus LUNAS setelah pembayaran ini
             </div>
           )}
 
@@ -1256,6 +1269,8 @@ function PreviewStep({
     </div>
   )
 }
+
+// ============ DoneStep ============
 
 function DoneStep({
   data,
@@ -1315,13 +1330,13 @@ function DoneStep({
         }}
       >
         <div style={{ fontSize: 12, color: COLOR.grayL, marginBottom: 4 }}>
-          Status Invoice {inv?.number}
+          Status Invoice {inv.number}
         </div>
         <div
           style={{
             fontSize: 18,
             fontWeight: 700,
-            color: isLunas ? COLOR.green : COLOR.blue,
+            color: isLunas ? COLOR.greenL : COLOR.blueL,
           }}
         >
           {isLunas ? '✓ LUNAS' : 'Sebagian Terbayar'}
@@ -1333,8 +1348,8 @@ function DoneStep({
         )}
         <div style={{ marginTop: 8 }}>
           <ProgressBar
-            paid={(inv?.paid || 0) + amtNum}
-            total={inv?.total || 0}
+            paid={inv.paid + amtNum}
+            total={inv.total}
             color={isLunas ? COLOR.greenL : COLOR.blueL}
           />
           <div
@@ -1345,7 +1360,7 @@ function DoneStep({
               textAlign: 'right',
             }}
           >
-            {pct((inv?.paid || 0) + amtNum, inv?.total || 0)}% terbayar
+            {pct(inv.paid + amtNum, inv.total)}% terbayar
           </div>
         </div>
       </div>
@@ -1361,15 +1376,15 @@ function DoneStep({
         }}
       >
         {[
-          ['Cetak Kwitansi', COLOR.white, null],
-          ['Kirim WA ke Customer', COLOR.white, null],
+          { label: 'Cetak Kwitansi', bg: COLOR.white, fn: null },
+          { label: 'Kirim WA ke Customer', bg: COLOR.white, fn: null },
           isLunas
-            ? ['Buat Faktur Pajak', COLOR.white, null]
-            : ['Catat Cicilan Berikutnya', COLOR.white, onNew],
-          ['Catat Pembayaran Lain', COLOR.greenL, onReset],
-        ].map(([l, bg, fn]) => (
+            ? { label: 'Buat Faktur Pajak', bg: COLOR.white, fn: null }
+            : { label: 'Catat Cicilan Berikutnya', bg: COLOR.white, fn: onNew },
+          { label: 'Catat Pembayaran Lain', bg: COLOR.greenL, fn: onReset },
+        ].map(({ label, bg, fn }) => (
           <button
-            key={l}
+            key={label}
             onClick={fn as any}
             style={{
               padding: '10px',
@@ -1382,13 +1397,15 @@ function DoneStep({
               color: bg === COLOR.greenL ? '#fff' : COLOR.gray,
             }}
           >
-            {l}
+            {label}
           </button>
         ))}
       </div>
     </div>
   )
 }
+
+// ============ Main Component ============
 
 export default function CatatPembayaranComponent() {
   const [step, setStep] = useState<'form' | 'preview' | 'done'>('form')

@@ -731,7 +731,6 @@ export const banks = [
   'Dana',
 ]
 
-// ============ INVENTORY PRODUCTS ============
 export const inventoryProducts: InventoryProduct[] = [
   {
     id: 'p1',
@@ -801,7 +800,6 @@ export const inventoryProducts: InventoryProduct[] = [
   },
 ]
 
-// ============ WA MESSAGES ============
 export const waMessages: WAMessage[] = [
   {
     id: 'w1',
@@ -845,7 +843,6 @@ export const waMessages: WAMessage[] = [
   },
 ]
 
-// ============ REVENUE DATA ============
 export const revenueData: RevenueData[] = [
   { month: 'Jan', amount: 42 },
   { month: 'Feb', amount: 38 },
@@ -861,7 +858,6 @@ export const revenueData: RevenueData[] = [
   { month: 'Des', amount: 73 },
 ]
 
-// ============ AR AGING DATA ============
 export const arAgingData: ARAgingData[] = [
   { period: 'Current', amount: 5200000, count: 2 },
   { period: '1-30 Hari', amount: 4800000, count: 3 },
@@ -869,7 +865,6 @@ export const arAgingData: ARAgingData[] = [
   { period: '> 60 Hari', amount: 1400000, count: 1 },
 ]
 
-// ============ ACCOUNTING - ACCOUNTS ============
 export const chartOfAccounts: Account[] = [
   { id: 'a1', code: '1100', name: 'Kas', type: 'asset', balance: 25000000 },
   { id: 'a2', code: '1200', name: 'Bank', type: 'asset', balance: 150000000 },
@@ -883,7 +878,6 @@ export const chartOfAccounts: Account[] = [
   { id: 'a10', code: '5200', name: 'Beban Operasional', type: 'expense', balance: 5000000 },
 ]
 
-// ============ BUSINESSES ============
 export const businessList: Business[] = [
   {
     id: 'b1',
@@ -921,7 +915,6 @@ export const businessList: Business[] = [
   },
 ]
 
-// ============ PRODUCTS LIST (untuk menu Produk) ============
 export const productsList = [
   {
     id: 'p1',
