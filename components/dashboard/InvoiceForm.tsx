@@ -1277,31 +1277,27 @@ function PreviewStep({
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <div style={{ width: 300 }}>
               {[
-                ['Subtotal', rp(subtotalAll), COLOR.txtS],
-                discItemsAll > 0 ? ['Diskon item', '−' + rp(discItemsAll), COLOR.warningT] : null,
-                discGlobAmt > 0
-                  ? [`Diskon global ${discGlobal}%`, '−' + rp(discGlobAmt), COLOR.warningT]
-                  : null,
-                totalTax > 0 ? ['PPN', rp(totalTax), COLOR.warningT] : null,
-                addOther > 0 ? [otherLabel, rp(addOther), COLOR.txtS] : null,
-              ]
-                .filter(Boolean)
-                .map(([l, v, c]) => (
-                  <div
-                    key={l}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: 13,
-                      padding: '5px 0',
-                      borderBottom: `1px solid ${COLOR.border}`,
-                      color: c,
-                    }}
-                  >
-                    <span>{l}</span>
-                    <span style={{ fontWeight: 600 }}>{v}</span>
-                  </div>
-                ))}
+                { label: 'Subtotal', value: rp(subtotalAll), color: COLOR.txtS },
+                ...(discItemsAll > 0 ? [{ label: 'Diskon item', value: '−' + rp(discItemsAll), color: COLOR.warningT }] : []),
+                ...(discGlobAmt > 0 ? [{ label: `Diskon global ${discGlobal}%`, value: '−' + rp(discGlobAmt), color: COLOR.warningT }] : []),
+                ...(totalTax > 0 ? [{ label: 'PPN', value: rp(totalTax), color: COLOR.warningT }] : []),
+                ...(addOther > 0 ? [{ label: otherLabel, value: rp(addOther), color: COLOR.txtS }] : []),
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: 13,
+                    padding: '5px 0',
+                    borderBottom: `1px solid ${COLOR.border}`,
+                    color: item.color,
+                  }}
+                >
+                  <span>{item.label}</span>
+                  <span style={{ fontWeight: 600 }}>{item.value}</span>
+                </div>
+              ))}
               <div
                 style={{
                   display: 'flex',
