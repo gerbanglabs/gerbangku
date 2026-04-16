@@ -15,7 +15,11 @@ const COLOR = {
   greenXL: '#f0fff4',
   blue: '#2b6cb0',
   blueL: '#3182ce',
+  blueXL: '#ebf8ff',      // ← ADD THIS
   red: '#c53030',
+  redXL: '#fff5f5',       // ← ADD THIS
+  yellow: '#d69e2e',
+  yellowL: '#fffbeb',
 }
 
 const rp = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID')
@@ -50,7 +54,7 @@ export default function AccountingMenu() {
     liability: { bg: COLOR.greenXL, color: COLOR.greenL },
     equity: { bg: '#f0fff4', color: COLOR.green },
     income: { bg: COLOR.greenXL, color: COLOR.greenL },
-    expense: { bg: '#fff5f5', color: COLOR.red },
+    expense: { bg: COLOR.redXL, color: COLOR.red },
   }
 
   return (
@@ -187,7 +191,14 @@ export default function AccountingMenu() {
                       <Tag bg={c.bg} color={c.color}>
                         {acc.type}
                       </Tag>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: COLOR.dark, textAlign: 'right' }}>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: COLOR.dark,
+                          textAlign: 'right',
+                        }}
+                      >
                         {rp(acc.balance)}
                       </div>
                     </div>
