@@ -200,7 +200,7 @@ function ProductRow({
     (p) =>
       p.name.toLowerCase().includes(q.toLowerCase()) ||
       p.sku.toLowerCase().includes(q.toLowerCase()) ||
-      p.cat.toLowerCase().includes(q.toLowerCase()),
+      p.category.toLowerCase().includes(q.toLowerCase()),
   )
   const selProd = products.find((p) => p.id === row.product_id)
 
@@ -213,7 +213,7 @@ function ProductRow({
   }, [])
 
   const selectProd = (p: Product) => {
-    const price = priceGroup && p.prices[priceGroup] ? p.prices[priceGroup] : p.base_price
+    const price = priceGroup && p.prices[priceGroup] ? p.prices[priceGroup] : p.price 
     onUpdate({ ...row, product_id: p.id, uom: p.uom, unit_price: price, tax_rate: p.tax_rate })
     setOpen(false)
     setQ('')
@@ -297,7 +297,7 @@ function ProductRow({
             </div>
             <div style={{ maxHeight: 240, overflow: 'auto' }}>
               {filtered.map((p) => {
-                const price = priceGroup && p.prices[priceGroup] ? p.prices[priceGroup] : p.base_price
+                const price = priceGroup && p.prices[priceGroup] ? p.prices[priceGroup] : p.price
                 return (
                   <div
                     key={p.id}
@@ -317,7 +317,7 @@ function ProductRow({
                     </div>
                     <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
                       <span style={{ fontSize: 10, color: COLOR.txtS }}>
-                        {p.cat} · {p.sku}
+                        {p.category} · {p.sku}
                       </span>
                       <span
                         style={{
@@ -674,7 +674,7 @@ export default function SOForm() {
                           if (!r.product_id) return r
                           const p = products.find((pr) => pr.id === r.product_id)
                           if (!p) return r
-                          return { ...r, unit_price: p.prices[c.price_group] || p.base_price }
+                          return { ...r, unit_price: p.prices[c.price_group] || p.price }
                         }),
                       )
                     }
