@@ -900,6 +900,8 @@ export const businessList: Business[] = [
     npwp: '01.234.567.8-901.000',
     area: 'Denpasar',
     created_at: '2025-01-15',
+    color: '#e07b39', // ✅ ADD
+    tipe: 'supplier', // ✅ ADD (sama dengan type)
   },
   {
     id: 'b2',
@@ -912,6 +914,8 @@ export const businessList: Business[] = [
     npwp: '02.345.678.9-012.000',
     area: 'Canggu',
     created_at: '2025-02-10',
+    color: '#2d6a4f', // ✅ ADD
+    tipe: 'penginapan', // ✅ ADD
   },
   {
     id: 'b3',
@@ -922,6 +926,8 @@ export const businessList: Business[] = [
     phone: '0361-555666',
     area: 'Ubud',
     created_at: '2025-03-01',
+    color: '#c9733a', // ✅ ADD
+    tipe: 'kuliner', // ✅ ADD
   },
 ]
 
