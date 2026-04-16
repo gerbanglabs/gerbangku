@@ -57,12 +57,13 @@ export interface Product {
   id: string
   sku: string
   name: string
-  cat: string
+  category: string 
   uom: string
-  base_price: number
+  price: number 
   prices: Record<string, number>
   stock: number
   tax_rate: number
+  active: boolean 
 }
 
 export interface Warehouse {
@@ -274,20 +275,6 @@ export interface StockMovement {
   reason: string
   date: string
   reference?: string
-}
-
-// ============ PRODUCTS (Produk) ============
-export interface Product {
-  id: string
-  sku: string
-  name: string
-  category: string
-  description?: string
-  price: number
-  cost?: number
-  uom: string
-  tax_rate: number
-  active: boolean
 }
 
 // ============ WA ORDER ============
