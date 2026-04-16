@@ -16,6 +16,7 @@ const COLOR = {
   greenXL: '#f0fff4',
   blue: '#2b6cb0',
   blueL: '#3182ce',
+  blueXL: '#ebf8ff',
 }
 
 function Tag({ bg, color, children }: { bg: string; color: string; children: React.ReactNode }) {
