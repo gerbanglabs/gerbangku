@@ -1,0 +1,15 @@
+{"timestamp":"00:00:00.750","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:00.750","source":"Server","level":"LOG","message":"  We detected TypeScript in your project and reconfigured your tsconfig.json file for you."}
+{"timestamp":"00:00:00.751","source":"Server","level":"LOG","message":"  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:\n"}
+{"timestamp":"00:00:00.751","source":"Server","level":"LOG","message":"  \t- include was updated to add '.next/dev/types/**/*.ts'"}
+{"timestamp":"00:00:00.751","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:00.752","source":"Server","level":"LOG","message":"  The following mandatory changes were made to your tsconfig.json:\n"}
+{"timestamp":"00:00:00.752","source":"Server","level":"LOG","message":"  \t- jsx was set to react-jsx (next.js uses the React automatic runtime)"}
+{"timestamp":"00:00:00.752","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:00.873","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:14.451","source":"Server","level":"LOG","message":"○ Compiling / ..."}
+{"timestamp":"00:00:18.535","source":"Server","level":"WARN","message":"Error: Route \"/[slug]\" used `params.slug`. `params` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis"}
+{"timestamp":"00:01:18.506","source":"Server","level":"WARN","message":"Error: Route \"/[slug]\" used `params.slug`. `params` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis"}
+{"timestamp":"00:01:25.359","source":"Server","level":"WARN","message":"Error: Route \"/[slug]\" used `params.slug`. `params` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis"}
+{"timestamp":"00:01:28.225","source":"Server","level":"WARN","message":"Error: Route \"/[slug]\" used `params.slug`. `params` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis"}
+{"timestamp":"00:01:30.382","source":"Server","level":"WARN","message":"Error: Route \"/[slug]\" used `params.slug`. `params` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis"}

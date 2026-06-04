@@ -1,0 +1,1009 @@
+module.exports = [
+"[project]/src/lib/api.ts [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "authAPI",
+    ()=>authAPI,
+    "buildWAMessage",
+    ()=>buildWAMessage,
+    "businessAPI",
+    ()=>businessAPI,
+    "customerAPI",
+    ()=>customerAPI,
+    "deliveryOrderAPI",
+    ()=>deliveryOrderAPI,
+    "formatDate",
+    ()=>formatDate,
+    "formatRupiah",
+    ()=>formatRupiah,
+    "invoiceAPI",
+    ()=>invoiceAPI,
+    "paymentAPI",
+    ()=>paymentAPI,
+    "productAPI",
+    ()=>productAPI,
+    "purchaseOrderAPI",
+    ()=>purchaseOrderAPI,
+    "reportAPI",
+    ()=>reportAPI,
+    "salesOrderAPI",
+    ()=>salesOrderAPI,
+    "storefrontAPI",
+    ()=>storefrontAPI,
+    "supplierAPI",
+    ()=>supplierAPI,
+    "waAPI",
+    ()=>waAPI
+]);
+// ── Gerbangku Unified API Client ─────────────────────────────
+// Used by: Dashboard, Storefront, Landing
+const API_BASE = ("TURBOPACK compile-time value", "http://localhost:9000/api/v1") || 'http://localhost:3000/api/v1';
+// ── Core request helper ───────────────────────────────────────
+function getToken() {
+    if ("TURBOPACK compile-time truthy", 1) return '';
+    //TURBOPACK unreachable
+    ;
+}
+async function request(path, options = {}) {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...token ? {
+                Authorization: `Bearer ${token}`
+            } : {},
+            ...options.headers
+        }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || data.message || 'Request failed');
+    return data.data;
+}
+async function publicFetch(path) {
+    const res = await fetch(`${API_BASE}${path}`, {
+        next: {
+            revalidate: 60
+        }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || 'Request failed');
+    return data.data;
+}
+function formatRupiah(n) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(n);
+}
+function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    });
+}
+function buildWAMessage(businessName, cart, customer, orderNumber) {
+    let msg = `*PESANAN - ${businessName.toUpperCase()}*\n━━━━━━━━━━━━━━━━━━━\n\n`;
+    if (orderNumber) msg += `No. Pesanan: *${orderNumber}*\n\n`;
+    msg += `*${customer.name}*\n${customer.phone}\n${customer.address}\n\n`;
+    let total = 0;
+    cart.forEach((item, i)=>{
+        const sub = item.product.price * item.quantity;
+        msg += `${i + 1}. ${item.product.name}\n   ${item.quantity} ${item.product.unit} x ${formatRupiah(item.product.price)} = ${formatRupiah(sub)}\n\n`;
+        total += sub;
+    });
+    msg += `━━━━━━━━━━━━━━━━━━━\n*TOTAL: ${formatRupiah(total)}*\n\n_Terima kasih! 🙏_`;
+    return msg;
+}
+const authAPI = {
+    login: (email, password)=>request('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({
+                email,
+                password
+            })
+        }),
+    register: (data)=>request('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+    getProfile: ()=>request('/profile')
+};
+const businessAPI = {
+    list: ()=>request('/businesses'),
+    get: (id)=>request(`/businesses/${id}`),
+    create: (data)=>request('/businesses', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+    update: (id, data)=>request(`/businesses/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        }),
+    getDashboard: (id)=>request(`/businesses/${id}/dashboard`)
+};
+const productAPI = {
+    list: (bizId, params)=>{
+        const q = params ? '?' + new URLSearchParams(params).toString() : '';
+        return request(`/businesses/${bizId}/products${q}`);
+    },
+    get: (bizId, id)=>request(`/businesses/${bizId}/products/${id}`),
+    create: (bizId, data)=>request(`/businesses/${bizId}/products`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+    update: (bizId, id, data)=>request(`/businesses/${bizId}/products/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        }),
+    delete: (bizId, id)=>request(`/businesses/${bizId}/products/${id}`, {
+            method: 'DELETE'
+        }),
+    adjustStock: (bizId, id, quantity, notes)=>request(`/businesses/${bizId}/products/${id}/adjust-stock`, {
+            method: 'POST',
+            body: JSON.stringify({
+                quantity,
+                notes
+            })
+        }),
+    getMovements: (bizId, id)=>request(`/businesses/${bizId}/products/${id}/movements`),
+    getCategories: (bizId)=>request(`/businesses/${bizId}/categories`),
+    createCategory: (bizId, name)=>request(`/businesses/${bizId}/categories`, {
+            method: 'POST',
+            body: JSON.stringify({
+                name
+            })
+        })
+};
+const customerAPI = {
+    list: (bizId, search)=>request(`/businesses/${bizId}/customers${search ? `?search=${search}` : ''}`),
+    get: (bizId, id)=>request(`/businesses/${bizId}/customers/${id}`),
+    create: (bizId, data)=>request(`/businesses/${bizId}/customers`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+    update: (bizId, id, data)=>request(`/businesses/${bizId}/customers/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        })
+};
+const supplierAPI = {
+    list: (bizId, search)=>request(`/businesses/${bizId}/suppliers${search ? `?search=${search}` : ''}`),
+    get: (bizId, id)=>request(`/businesses/${bizId}/suppliers/${id}`),
+    create: (bizId, data)=>request(`/businesses/${bizId}/suppliers`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+    update: (bizId, id, data)=>request(`/businesses/${bizId}/suppliers/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        }),
+    delete: (bizId, id)=>request(`/businesses/${bizId}/suppliers/${id}`, {
+            method: 'DELETE'
+        })
+};
+const salesOrderAPI = {
+    list: (bizId, params)=>{
+        const q = params ? '?' + new URLSearchParams(params).toString() : '';
+        return request(`/businesses/${bizId}/sales-orders${q}`);
+    },
+    get: (bizId, id)=>request(`/businesses/${bizId}/sales-orders/${id}`),
+    create: (bizId, data)=>request(`/businesses/${bizId}/sales-orders`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+    updateStatus: (bizId, id, status)=>request(`/businesses/${bizId}/sales-orders/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+                status
+            })
+        })
+};
+const purchaseOrderAPI = {
+    list: (bizId, params)=>{
+        const q = params ? '?' + new URLSearchParams(params).toString() : '';
+        return request(`/businesses/${bizId}/purchase-orders${q}`);
+    },
+    get: (bizId, id)=>request(`/businesses/${bizId}/purchase-orders/${id}`),
+    create: (bizId, data)=>request(`/businesses/${bizId}/purchase-orders`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+    updateStatus: (bizId, id, status)=>request(`/businesses/${bizId}/purchase-orders/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+                status
+            })
+        }),
+    receiveItems: (bizId, id, items)=>request(`/businesses/${bizId}/purchase-orders/${id}/receive`, {
+            method: 'POST',
+            body: JSON.stringify({
+                items
+            })
+        })
+};
+const deliveryOrderAPI = {
+    list: (bizId, params)=>{
+        const q = params ? '?' + new URLSearchParams(params).toString() : '';
+        return request(`/businesses/${bizId}/delivery-orders${q}`);
+    },
+    get: (bizId, id)=>request(`/businesses/${bizId}/delivery-orders/${id}`),
+    create: (bizId, data)=>request(`/businesses/${bizId}/delivery-orders`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+    updateStatus: (bizId, id, status)=>request(`/businesses/${bizId}/delivery-orders/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+                status
+            })
+        })
+};
+const invoiceAPI = {
+    list: (bizId, params)=>{
+        const q = params ? '?' + new URLSearchParams(params).toString() : '';
+        return request(`/businesses/${bizId}/invoices${q}`);
+    },
+    get: (bizId, id)=>request(`/businesses/${bizId}/invoices/${id}`),
+    create: (bizId, data)=>request(`/businesses/${bizId}/invoices`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+    updateStatus: (bizId, id, status)=>request(`/businesses/${bizId}/invoices/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+                status
+            })
+        }),
+    getARAgeing: (bizId)=>request(`/businesses/${bizId}/reports/ar-aging`)
+};
+const paymentAPI = {
+    list: (bizId)=>request(`/businesses/${bizId}/payments`),
+    create: (bizId, data)=>request(`/businesses/${bizId}/payments`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        })
+};
+const reportAPI = {
+    sales: (bizId, params)=>{
+        const q = params ? '?' + new URLSearchParams(params).toString() : '';
+        return request(`/businesses/${bizId}/reports/sales${q}`);
+    },
+    inventory: (bizId)=>request(`/businesses/${bizId}/reports/inventory`),
+    profitLoss: (bizId, params)=>{
+        const q = params ? '?' + new URLSearchParams(params).toString() : '';
+        return request(`/businesses/${bizId}/reports/profit-loss${q}`);
+    }
+};
+const waAPI = {
+    getConfig: (bizId)=>request(`/businesses/${bizId}/wa/config`),
+    saveConfig: (bizId, data)=>request(`/businesses/${bizId}/wa/config`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+    getConversations: (bizId, status)=>request(`/businesses/${bizId}/wa/conversations${status ? `?status=${status}` : ''}`),
+    getMessages: (bizId, convId)=>request(`/businesses/${bizId}/wa/conversations/${convId}/messages`),
+    sendMessage: (bizId, phone, message)=>request(`/businesses/${bizId}/wa/send`, {
+            method: 'POST',
+            body: JSON.stringify({
+                phone,
+                message
+            })
+        }),
+    getStats: (bizId)=>request(`/businesses/${bizId}/wa/stats`)
+};
+const storefrontAPI = {
+    getBusinessInfo: (slug)=>publicFetch(`/public/business/${slug}/info`),
+    getProducts: (slug, category)=>{
+        const q = category && category !== 'all' ? `?category=${category}` : '';
+        return publicFetch(`/public/business/${slug}/products${q}`);
+    },
+    createOrder: (slug, payload)=>fetch(`${API_BASE}/public/business/${slug}/orders`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        }).then((r)=>r.json()).then((d)=>d.data)
+};
+}),
+"[project]/src/app/register/page.tsx [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>RegisterPage
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/navigation.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$eye$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Eye$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/eye.js [app-ssr] (ecmascript) <export default as Eye>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$eye$2d$off$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__EyeOff$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/eye-off.js [app-ssr] (ecmascript) <export default as EyeOff>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$check$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Check$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/check.js [app-ssr] (ecmascript) <export default as Check>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$alert$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertCircle$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/circle-alert.js [app-ssr] (ecmascript) <export default as AlertCircle>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/api.ts [app-ssr] (ecmascript)");
+'use client';
+;
+;
+;
+;
+;
+function RegisterPage() {
+    const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRouter"])();
+    const [step, setStep] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(1);
+    const [form, setForm] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])({
+        full_name: '',
+        email: '',
+        password: '',
+        confirm: '',
+        phone: ''
+    });
+    const [showPass, setShowPass] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [error, setError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('');
+    const set = (k, v)=>setForm((f)=>({
+                ...f,
+                [k]: v
+            }));
+    const pwStrength = (pw)=>{
+        let score = 0;
+        if (pw.length >= 8) score++;
+        if (/[A-Z]/.test(pw)) score++;
+        if (/[0-9]/.test(pw)) score++;
+        if (/[^A-Za-z0-9]/.test(pw)) score++;
+        return score;
+    };
+    const strength = pwStrength(form.password);
+    const strengthLabel = [
+        '',
+        'Lemah',
+        'Cukup',
+        'Bagus',
+        'Kuat'
+    ][strength];
+    const strengthColor = [
+        '',
+        '#EF4444',
+        '#F59E0B',
+        '#10B981',
+        '#10B981'
+    ][strength];
+    const handleSubmit = async (e)=>{
+        e.preventDefault();
+        if (form.password !== form.confirm) {
+            setError('Password tidak cocok');
+            return;
+        }
+        if (strength < 2) {
+            setError('Password terlalu lemah');
+            return;
+        }
+        setLoading(true);
+        setError('');
+        try {
+            const { token } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["authAPI"].register({
+                email: form.email,
+                password: form.password,
+                full_name: form.full_name,
+                phone: form.phone
+            });
+            localStorage.setItem('gerbangku_token', token);
+            router.push('/onboarding');
+        } catch (e) {
+            setError(e.message);
+        } finally{
+            setLoading(false);
+        }
+    };
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+        style: {
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #1A1A2E 0%, #16213E 50%, #0F3460 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16
+        },
+        children: [
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                style: {
+                    position: 'fixed',
+                    top: -100,
+                    right: -100,
+                    width: 400,
+                    height: 400,
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(232,100,12,0.15), transparent 70%)',
+                    pointerEvents: 'none'
+                }
+            }, void 0, false, {
+                fileName: "[project]/src/app/register/page.tsx",
+                lineNumber: 50,
+                columnNumber: 7
+            }, this),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                style: {
+                    position: 'fixed',
+                    bottom: -150,
+                    left: -100,
+                    width: 500,
+                    height: 500,
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(245,158,11,0.1), transparent 70%)',
+                    pointerEvents: 'none'
+                }
+            }, void 0, false, {
+                fileName: "[project]/src/app/register/page.tsx",
+                lineNumber: 51,
+                columnNumber: 7
+            }, this),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                style: {
+                    width: '100%',
+                    maxWidth: 460,
+                    position: 'relative'
+                },
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        style: {
+                            textAlign: 'center',
+                            marginBottom: 28
+                        },
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                style: {
+                                    width: 52,
+                                    height: 52,
+                                    background: 'linear-gradient(135deg, #E8640C, #F59E0B)',
+                                    borderRadius: 16,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: 26,
+                                    margin: '0 auto 12px',
+                                    boxShadow: '0 8px 24px rgba(232,100,12,0.3)'
+                                },
+                                children: "🏪"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/register/page.tsx",
+                                lineNumber: 56,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
+                                style: {
+                                    color: '#F3F4F6',
+                                    fontSize: 24,
+                                    fontWeight: 700,
+                                    marginBottom: 4
+                                },
+                                children: "Mulai Pakai Gerbangku"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/register/page.tsx",
+                                lineNumber: 57,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                style: {
+                                    color: '#6B7280',
+                                    fontSize: 14
+                                },
+                                children: "Daftar gratis, mulai kelola bisnis Anda"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/register/page.tsx",
+                                lineNumber: 58,
+                                columnNumber: 11
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/register/page.tsx",
+                        lineNumber: 55,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        style: {
+                            background: 'rgba(255,255,255,0.04)',
+                            backdropFilter: 'blur(20px)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 20,
+                            padding: '32px 28px'
+                        },
+                        children: [
+                            error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                style: {
+                                    background: 'rgba(239,68,68,0.1)',
+                                    border: '1px solid rgba(239,68,68,0.2)',
+                                    borderRadius: 8,
+                                    padding: '10px 12px',
+                                    marginBottom: 16,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    color: '#FCA5A5',
+                                    fontSize: 13
+                                },
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$alert$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertCircle$3e$__["AlertCircle"], {
+                                        size: 15
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/register/page.tsx",
+                                        lineNumber: 64,
+                                        columnNumber: 15
+                                    }, this),
+                                    error
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/register/page.tsx",
+                                lineNumber: 63,
+                                columnNumber: 13
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
+                                onSubmit: handleSubmit,
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        style: {
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: 14
+                                        },
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                        style: {
+                                                            display: 'block',
+                                                            color: '#9CA3AF',
+                                                            fontSize: 13,
+                                                            fontWeight: 500,
+                                                            marginBottom: 6
+                                                        },
+                                                        children: "Nama Lengkap"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                        lineNumber: 72,
+                                                        columnNumber: 17
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                        type: "text",
+                                                        required: true,
+                                                        value: form.full_name,
+                                                        onChange: (e)=>set('full_name', e.target.value),
+                                                        placeholder: "Budi Santoso",
+                                                        style: {
+                                                            width: '100%',
+                                                            padding: '11px 14px',
+                                                            background: 'rgba(255,255,255,0.06)',
+                                                            border: '1.5px solid rgba(255,255,255,0.1)',
+                                                            borderRadius: 10,
+                                                            color: '#F3F4F6',
+                                                            fontSize: 14,
+                                                            outline: 'none',
+                                                            fontFamily: 'inherit'
+                                                        },
+                                                        onFocus: (e)=>e.target.style.borderColor = '#E8640C',
+                                                        onBlur: (e)=>e.target.style.borderColor = 'rgba(255,255,255,0.1)'
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                        lineNumber: 73,
+                                                        columnNumber: 17
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/register/page.tsx",
+                                                lineNumber: 71,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                        style: {
+                                                            display: 'block',
+                                                            color: '#9CA3AF',
+                                                            fontSize: 13,
+                                                            fontWeight: 500,
+                                                            marginBottom: 6
+                                                        },
+                                                        children: "Email"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                        lineNumber: 82,
+                                                        columnNumber: 17
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                        type: "email",
+                                                        required: true,
+                                                        value: form.email,
+                                                        onChange: (e)=>set('email', e.target.value),
+                                                        placeholder: "budi@example.com",
+                                                        style: {
+                                                            width: '100%',
+                                                            padding: '11px 14px',
+                                                            background: 'rgba(255,255,255,0.06)',
+                                                            border: '1.5px solid rgba(255,255,255,0.1)',
+                                                            borderRadius: 10,
+                                                            color: '#F3F4F6',
+                                                            fontSize: 14,
+                                                            outline: 'none',
+                                                            fontFamily: 'inherit'
+                                                        },
+                                                        onFocus: (e)=>e.target.style.borderColor = '#E8640C',
+                                                        onBlur: (e)=>e.target.style.borderColor = 'rgba(255,255,255,0.1)'
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                        lineNumber: 83,
+                                                        columnNumber: 17
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/register/page.tsx",
+                                                lineNumber: 81,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                        style: {
+                                                            display: 'block',
+                                                            color: '#9CA3AF',
+                                                            fontSize: 13,
+                                                            fontWeight: 500,
+                                                            marginBottom: 6
+                                                        },
+                                                        children: "No. WhatsApp"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                        lineNumber: 92,
+                                                        columnNumber: 17
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                        type: "tel",
+                                                        value: form.phone,
+                                                        onChange: (e)=>set('phone', e.target.value),
+                                                        placeholder: "08123456789",
+                                                        style: {
+                                                            width: '100%',
+                                                            padding: '11px 14px',
+                                                            background: 'rgba(255,255,255,0.06)',
+                                                            border: '1.5px solid rgba(255,255,255,0.1)',
+                                                            borderRadius: 10,
+                                                            color: '#F3F4F6',
+                                                            fontSize: 14,
+                                                            outline: 'none',
+                                                            fontFamily: 'inherit'
+                                                        },
+                                                        onFocus: (e)=>e.target.style.borderColor = '#E8640C',
+                                                        onBlur: (e)=>e.target.style.borderColor = 'rgba(255,255,255,0.1)'
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                        lineNumber: 93,
+                                                        columnNumber: 17
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/register/page.tsx",
+                                                lineNumber: 91,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                        style: {
+                                                            display: 'block',
+                                                            color: '#9CA3AF',
+                                                            fontSize: 13,
+                                                            fontWeight: 500,
+                                                            marginBottom: 6
+                                                        },
+                                                        children: "Password"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                        lineNumber: 102,
+                                                        columnNumber: 17
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        style: {
+                                                            position: 'relative'
+                                                        },
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                                type: showPass ? 'text' : 'password',
+                                                                required: true,
+                                                                value: form.password,
+                                                                onChange: (e)=>set('password', e.target.value),
+                                                                placeholder: "Min. 8 karakter",
+                                                                style: {
+                                                                    width: '100%',
+                                                                    padding: '11px 40px 11px 14px',
+                                                                    background: 'rgba(255,255,255,0.06)',
+                                                                    border: '1.5px solid rgba(255,255,255,0.1)',
+                                                                    borderRadius: 10,
+                                                                    color: '#F3F4F6',
+                                                                    fontSize: 14,
+                                                                    outline: 'none',
+                                                                    fontFamily: 'inherit'
+                                                                },
+                                                                onFocus: (e)=>e.target.style.borderColor = '#E8640C',
+                                                                onBlur: (e)=>e.target.style.borderColor = 'rgba(255,255,255,0.1)'
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/register/page.tsx",
+                                                                lineNumber: 104,
+                                                                columnNumber: 19
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                                type: "button",
+                                                                onClick: ()=>setShowPass(!showPass),
+                                                                style: {
+                                                                    position: 'absolute',
+                                                                    right: 12,
+                                                                    top: '50%',
+                                                                    transform: 'translateY(-50%)',
+                                                                    background: 'none',
+                                                                    border: 'none',
+                                                                    color: '#6B7280',
+                                                                    cursor: 'pointer'
+                                                                },
+                                                                children: showPass ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$eye$2d$off$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__EyeOff$3e$__["EyeOff"], {
+                                                                    size: 16
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/src/app/register/page.tsx",
+                                                                    lineNumber: 110,
+                                                                    columnNumber: 33
+                                                                }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$eye$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Eye$3e$__["Eye"], {
+                                                                    size: 16
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/src/app/register/page.tsx",
+                                                                    lineNumber: 110,
+                                                                    columnNumber: 56
+                                                                }, this)
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/register/page.tsx",
+                                                                lineNumber: 109,
+                                                                columnNumber: 19
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                        lineNumber: 103,
+                                                        columnNumber: 17
+                                                    }, this),
+                                                    form.password && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        style: {
+                                                            marginTop: 6
+                                                        },
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                style: {
+                                                                    display: 'flex',
+                                                                    gap: 3,
+                                                                    marginBottom: 3
+                                                                },
+                                                                children: [
+                                                                    1,
+                                                                    2,
+                                                                    3,
+                                                                    4
+                                                                ].map((i)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                        style: {
+                                                                            flex: 1,
+                                                                            height: 3,
+                                                                            borderRadius: 99,
+                                                                            background: i <= strength ? strengthColor : 'rgba(255,255,255,0.1)',
+                                                                            transition: 'background 0.3s'
+                                                                        }
+                                                                    }, i, false, {
+                                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                                        lineNumber: 117,
+                                                                        columnNumber: 25
+                                                                    }, this))
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/register/page.tsx",
+                                                                lineNumber: 115,
+                                                                columnNumber: 21
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                style: {
+                                                                    fontSize: 11,
+                                                                    color: strengthColor
+                                                                },
+                                                                children: strengthLabel
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/register/page.tsx",
+                                                                lineNumber: 120,
+                                                                columnNumber: 21
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                        lineNumber: 114,
+                                                        columnNumber: 19
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/register/page.tsx",
+                                                lineNumber: 101,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                        style: {
+                                                            display: 'block',
+                                                            color: '#9CA3AF',
+                                                            fontSize: 13,
+                                                            fontWeight: 500,
+                                                            marginBottom: 6
+                                                        },
+                                                        children: "Konfirmasi Password"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                        lineNumber: 127,
+                                                        columnNumber: 17
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                        type: "password",
+                                                        required: true,
+                                                        value: form.confirm,
+                                                        onChange: (e)=>set('confirm', e.target.value),
+                                                        placeholder: "Ulangi password",
+                                                        style: {
+                                                            width: '100%',
+                                                            padding: '11px 14px',
+                                                            background: form.confirm && form.confirm !== form.password ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.06)',
+                                                            border: `1.5px solid ${form.confirm && form.confirm !== form.password ? '#EF4444' : 'rgba(255,255,255,0.1)'}`,
+                                                            borderRadius: 10,
+                                                            color: '#F3F4F6',
+                                                            fontSize: 14,
+                                                            outline: 'none',
+                                                            fontFamily: 'inherit'
+                                                        },
+                                                        onFocus: (e)=>{
+                                                            if (form.confirm === form.password) e.target.style.borderColor = '#E8640C';
+                                                        },
+                                                        onBlur: (e)=>{
+                                                            if (form.confirm === form.password) e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                                                        }
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                        lineNumber: 128,
+                                                        columnNumber: 17
+                                                    }, this),
+                                                    form.confirm && form.confirm === form.password && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        style: {
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 4,
+                                                            marginTop: 4,
+                                                            fontSize: 12,
+                                                            color: '#10B981'
+                                                        },
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$check$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Check$3e$__["Check"], {
+                                                                size: 12
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/register/page.tsx",
+                                                                lineNumber: 135,
+                                                                columnNumber: 21
+                                                            }, this),
+                                                            " Password cocok"
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/register/page.tsx",
+                                                        lineNumber: 134,
+                                                        columnNumber: 19
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/register/page.tsx",
+                                                lineNumber: 126,
+                                                columnNumber: 15
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/register/page.tsx",
+                                        lineNumber: 69,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                        type: "submit",
+                                        disabled: loading,
+                                        style: {
+                                            width: '100%',
+                                            marginTop: 20,
+                                            padding: '12px',
+                                            background: loading ? 'rgba(232,100,12,0.5)' : 'linear-gradient(135deg, #E8640C, #F59E0B)',
+                                            border: 'none',
+                                            borderRadius: 10,
+                                            color: '#fff',
+                                            fontSize: 15,
+                                            fontWeight: 600,
+                                            cursor: loading ? 'not-allowed' : 'pointer',
+                                            fontFamily: 'inherit',
+                                            boxShadow: '0 4px 12px rgba(232,100,12,0.25)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: 8
+                                        },
+                                        children: [
+                                            loading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                style: {
+                                                    width: 16,
+                                                    height: 16,
+                                                    borderRadius: '50%',
+                                                    border: '2px solid rgba(255,255,255,0.4)',
+                                                    borderTopColor: '#fff',
+                                                    animation: 'spin 0.8s linear infinite'
+                                                }
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/register/page.tsx",
+                                                lineNumber: 149,
+                                                columnNumber: 27
+                                            }, this),
+                                            loading ? 'Mendaftar...' : 'Daftar Sekarang'
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/register/page.tsx",
+                                        lineNumber: 141,
+                                        columnNumber: 13
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/register/page.tsx",
+                                lineNumber: 68,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                style: {
+                                    textAlign: 'center',
+                                    marginTop: 16,
+                                    color: '#4B5563',
+                                    fontSize: 13
+                                },
+                                children: [
+                                    "Sudah punya akun?",
+                                    ' ',
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
+                                        href: "/login",
+                                        style: {
+                                            color: '#E8640C',
+                                            fontWeight: 600,
+                                            textDecoration: 'none'
+                                        },
+                                        children: "Masuk"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/register/page.tsx",
+                                        lineNumber: 156,
+                                        columnNumber: 13
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/register/page.tsx",
+                                lineNumber: 154,
+                                columnNumber: 11
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/register/page.tsx",
+                        lineNumber: 61,
+                        columnNumber: 9
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/register/page.tsx",
+                lineNumber: 53,
+                columnNumber: 7
+            }, this)
+        ]
+    }, void 0, true, {
+        fileName: "[project]/src/app/register/page.tsx",
+        lineNumber: 44,
+        columnNumber: 5
+    }, this);
+}
+}),
+];
+
+//# sourceMappingURL=src_0n67d58._.js.map

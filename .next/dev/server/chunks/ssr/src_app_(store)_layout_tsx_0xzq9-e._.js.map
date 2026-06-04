@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///home/robert/workspace/php/github.com/gerbanglabs/gerbangku/src/app/%28store%29/layout.tsx"],"sourcesContent":["export default function StoreLayout({ children }: { children: React.ReactNode }) {\n  return <>{children}</>\n}\n"],"names":["StoreLayout","children"],"mappings":";;;;;;AAAe,SAASA,YAAY,EAAEC,QAAQ,EAAiC;IAC7E,qBAAO;kBAAGA;;AACZ"}}]
+}

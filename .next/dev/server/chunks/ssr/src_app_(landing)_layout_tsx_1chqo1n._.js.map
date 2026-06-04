@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///home/robert/workspace/php/github.com/gerbanglabs/gerbangku/src/app/%28landing%29/layout.tsx"],"sourcesContent":["import type { Metadata } from 'next'\n\nexport const metadata: Metadata = {\n  title: 'Gerbangku — Platform Bisnis UMKM Bali',\n  description: 'Kelola produk, pesanan, invoice, dan WhatsApp bot bisnis Anda dalam satu platform. Gratis untuk UMKM Bali.',\n}\n\nexport default function LandingLayout({ children }: { children: React.ReactNode }) {\n  return <>{children}</>\n}\n"],"names":["metadata","title","description","LandingLayout","children"],"mappings":";;;;;;;;AAEO,MAAMA,WAAqB;IAChCC,OAAO;IACPC,aAAa;AACf;AAEe,SAASC,cAAc,EAAEC,QAAQ,EAAiC;IAC/E,qBAAO;kBAAGA;;AACZ"}}]
+}

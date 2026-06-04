@@ -1,0 +1,7 @@
+{
+  "/(landing)/landing/page": "app/(landing)/landing/page.js",
+  "/(store)/[slug]/page": "app/(store)/[slug]/page.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/register/page": "app/register/page.js"
+}
