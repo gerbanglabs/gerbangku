@@ -1,10 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { X, CheckCircle, Loader2, MessageCircle } from 'lucide-react'
-import { formatRupiah, buildWAMessage, type CartItem, type BusinessInfo } from '@/lib/api'
+import { formatRupiah, buildWAMessage, type CartItem, type BusinessPublicInfo } from '@/lib/api'
 
 type Props = {
-  business: BusinessInfo
+  business: BusinessPublicInfo
   cart: CartItem[]
   totalPrice: number
   onClose: () => void

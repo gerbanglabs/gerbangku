@@ -1,8 +1,8 @@
 import { MapPin, Phone, Clock, Star, Package } from 'lucide-react'
-import type { BusinessInfo } from '@/lib/api'
+import type { BusinessPublicInfo } from '@/lib/api'
 
 type Props = {
-  business: BusinessInfo
+  business: BusinessPublicInfo
   totalProducts: number
 }
 
