@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, use } from 'react'
 import { Search, X } from 'lucide-react'
-import { storefrontAPI, formatRupiah, type BusinessInfo, type Product } from '@/lib/api'
+import { storefrontAPI, formatRupiah, type BusinessPublicInfo, type Product } from '@/lib/api'
 import { useCart } from '@/hooks/useCart'
 import StoreHeader from '@/components/store/StoreHeader'
 import StoreHero from '@/components/store/StoreHero'
@@ -11,7 +11,7 @@ import CheckoutModal from '@/components/store/CheckoutModal'
 
 export default function StorePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
-  const [business, setBusiness] = useState<BusinessInfo | null>(null)
+  const [business, setBusiness] = useState<BusinessPublicInfo | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [filtered, setFiltered] = useState<Product[]>([])
   const [categories, setCategories] = useState<string[]>([])
