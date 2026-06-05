@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, use } from 'react'
 import { Search, X } from 'lucide-react'
-import { storefrontAPI, formatRupiah, type BusinessPublicInfo, type Product } from '@/lib/api'
+import { storefrontAPI, formatRupiah, type BusinessPublicInfo, type ProductPublic } from '@/lib/api'
 import { useCart } from '@/hooks/useCart'
 import StoreHeader from '@/components/store/StoreHeader'
 import StoreHero from '@/components/store/StoreHero'
@@ -12,15 +12,15 @@ import CheckoutModal from '@/components/store/CheckoutModal'
 export default function StorePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const [business, setBusiness] = useState<BusinessPublicInfo | null>(null)
-  const [products, setProducts] = useState<Product[]>([])
-  const [filtered, setFiltered] = useState<Product[]>([])
+  const [products, setProducts] = useState<ProductPublic[]>([])
+  const [filtered, setFiltered] = useState<ProductPublic[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [activeCategory, setActiveCategory] = useState('all')
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCheckout, setShowCheckout] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<ProductPublic | null>(null)
 
   const { cart, isOpen, setIsOpen, addToCart, updateQty, removeItem, clearCart, totalItems, totalPrice } = useCart()
 
