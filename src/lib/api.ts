@@ -81,7 +81,7 @@ export type Supplier = {
 
 export type SalesOrder = {
   id: string; so_number: string; customer_name: string; customer_phone: string
-  customer_address: string; status: string; order_date: string
+  customer_email: string; customer_address: string; status: string; order_date: string
   subtotal: number; discount_amount: number; tax_type: string; tax_rate: number
   tax_amount: number; shipping_cost: number; grand_total: number
   paid_amount: number; payment_status: string; payment_method: string; source: string
