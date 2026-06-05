@@ -1,10 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { ShoppingCart, MapPin, Phone, Clock } from 'lucide-react'
-import type { BusinessInfo } from '@/lib/api'
+import type { BusinessPublicInfo } from '@/lib/api'
 
 type Props = {
-  business: BusinessInfo
+  business: BusinessPublicInfo
   totalItems: number
   onCartOpen: () => void
 }
