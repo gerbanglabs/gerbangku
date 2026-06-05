@@ -1,12 +1,12 @@
 'use client'
 import { ShoppingCart, Star, BadgeCheck, Info } from 'lucide-react'
-import { formatRupiah, type Product } from '@/lib/api'
+import { formatRupiah, type ProductPublic } from '@/lib/api'
 
 type Props = {
-  product: Product
-  onAdd: (product: Product) => void
+  product: ProductPublic
+  onAdd: (product: ProductPublic) => void
   cartQty: number
-  onDetail?: (product: Product) => void
+  onDetail?: (product: ProductPublic) => void
 }
 
 export default function ProductCard({ product, onAdd, cartQty, onDetail }: Props) {
